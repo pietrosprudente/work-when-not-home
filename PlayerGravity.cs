@@ -17,6 +17,8 @@ public class PlayerGravity : MonoBehaviour
     public CapsuleCollider bodyCollider;
     private PhysicsRig physicsRig;
     private Vector3 rayPosition;
+    private bool isGrounded;
+    public bool onlyMoveWhenGrounded = false;
 
     public bool IsGrounded() {
         RaycastHit hit;
@@ -30,10 +32,16 @@ public class PlayerGravity : MonoBehaviour
         bodyCollider = rb.GetComponent<CapsuleCollider>();
         physicsRig = bodyCollider.GetComponent<PhysicsRig>();
     }
+    
+    private void Update() {
+        if (jumpButton.action.WasPressedThisFrame() && isGrounded) {
+            Jump();
+        }
+    }
 
     private void FixedUpdate()
     {
-        bool isGrounded = IsGrounded();
+        isGrounded = IsGrounded();
         climbProvider = GetComponent<ClimbProvider>();
         if (isGrounded) {
             rayPosition = bodyCollider.transform.position;
@@ -53,14 +61,11 @@ public class PlayerGravity : MonoBehaviour
         float z = leftHandMoveAction.action.ReadValue<Vector2>().y;
         Vector2 moveInput = new Vector2(x, z);
 
-        if (isGrounded) {
+        if (!onlyMoveWhenGrounded || (onlyMoveWhenGrounded && isGrounded)) {
             Quaternion yaw = Quaternion.Euler(0, forwardSource.eulerAngles.y, 0);
             Vector3 move = yaw * new Vector3(moveInput.x, 0, moveInput.y);
 
             rb.MovePosition(rb.position + move * Time.fixedDeltaTime * moveSpeed);
-            if (jumpButton.action.WasPressedThisFrame()) {
-                Jump();
-            }
         }
     }
 
